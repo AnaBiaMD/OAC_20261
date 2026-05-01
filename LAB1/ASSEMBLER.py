@@ -1,3 +1,7 @@
+RISCV_DEPTH = 16384
+RISCV_WIDTH = 32
+
+
 regis_global = {
 "zero":"x0", "ra":"x1", "sp":"x2", "gp":"x3", "tp":"x4",
  "t0":"x5","t1":"x6", "t2":"x7",
@@ -10,7 +14,7 @@ regis_global = {
  's10': 'x26', 's11': 'x27',
  "t3":"x28","t4":"x29","t5":"x30","t6":"x31"
 }
-inst_global = { #PRIMEIRO: MATEMÁTICA SEM SER IMEDIATA
+inst_global = { #R INSTRUCTIONS
     "add":{
         "opcode":"0110011",
         "funct3":"0x0",
@@ -51,7 +55,7 @@ inst_global = { #PRIMEIRO: MATEMÁTICA SEM SER IMEDIATA
         "funct3":"0x2",
          "funct7":"0x00"
     },
-    "addi":{ #A PARTIR DAQUI MATEMÁTICA IMEDIATA
+    "addi":{ #I INSTRUCTIONS
         "opcode":"0010011",
         "funct3":"0x0"
     },
@@ -66,11 +70,31 @@ inst_global = { #PRIMEIRO: MATEMÁTICA SEM SER IMEDIATA
         "xori":{
         "opcode":"0010011",
         "funct3":"0x4"
-    }
+    }, # I_LOAD INSTRUCTIONS
+        "lw":{
+        "opcode":"0000011",
+        "funct3":"0x2"
+    },
+        "lhu":{
+        "opcode":"0000011",
+        "funct3":"0x5"
+    },
+            "lw":{
+        "opcode":"0000011",
+        "funct3":"0x2"
+    }, #U TYPES
+    "lui":{
+        "opcode":"0110111",
+    },
+    "auipc":{
+        "opcode":"0010111",
+    },
 }
 
-non_immediate_math_instructs = ["add","sub","and","or","xor","srl","sll"]
-immediate_math_instructs = ["addi","xori","ori","andi"]
+R_TYPE = ["add","sub","and","or","xor","srl","sll"]
+I_TYPE = ["addi","xori","ori","andi"]
+I_LOAD_TYPE =["lw","lhu"]
+U_TYPE= ["lui","auipc"]
 
 def encoder_reg_opcode(reg):
     global inst_global
@@ -107,7 +131,6 @@ for i in range(len(linhas)):
             data.append(linha_atual)
     else:
         print(f"Linha {i} pulada. Motivo: Linha Vazia")
-    
 # CONVERSIONS HANDLERS
 def reg_to_bin(reg):
     num = int(reg.replace("x", ""))
@@ -120,30 +143,66 @@ def hex_to_bin(valor,bits):
 
 def int_to_bin(valor, bits):
     valor = int(valor)
-    if valor < 0: # máscara de 12 bits para casos negativos como -5
+    if valor < 0: # máscara para casos negativos como -5
         valor = valor & ((1 << bits) - 1)
     return format(valor, f"0{bits}b")
 
-def not_immediate_math(inst,reg):
+def R_TYPE_FUNCT(inst,reg):
     return hex_to_bin(inst["funct7"],7) + reg_to_bin(reg[2])+reg_to_bin(reg[1])+hex_to_bin(inst["funct3"],3)+reg_to_bin(reg[0])+ inst["opcode"]
-def immediate_math(inst,reg):
+def I_TYPE_FUNCT(inst,reg):
     return int_to_bin(reg[2],12)+reg_to_bin(reg[1])+hex_to_bin(inst["funct3"],3)+reg_to_bin(reg[0])+ inst["opcode"]
+def I_LOAD_TYPE_FUNCT(inst,reg):
+    global regis_global
+    rd = reg[0]
+    offset, rs1 = reg[1].split("(")
+    rs1 = rs1.replace(")", "")
+    rs1 = regis_global[rs1]
+    imm = int_to_bin(offset,12)
+    return (
+        imm +
+        reg_to_bin(rs1) +
+        hex_to_bin(inst["funct3"], 3) +
+        reg_to_bin(rd) +
+        inst["opcode"]
+    )
+def U_TYPE_FUNCT(inst,reg):
+    if reg[1][0:2]=="0x":
+        imm = hex_to_bin(reg[1],20) # 20 bits 
+    else:
+        imm = int_to_bin(reg[1],  20) 
+    return (
+        imm +
+        reg_to_bin(reg[0]) +
+        inst["opcode"]
+    )
+
 
 
 def TEXT_OUTPUT(text):
-    global inst_global
-    aux = -1
-    for i in text:
-        aux+=1
-        if i[1] not in inst_global:
-            print(f"Linha {i[0]} pulada. Motivo: Instrução não reconhecida.")
-            continue
-        inst_now,regis_now,instruct_name = encoder_reg_opcode(i[1:])
-        if instruct_name in non_immediate_math_instructs:
-            binario = not_immediate_math(inst_now,regis_now)
-        elif instruct_name in immediate_math_instructs:
-            binario = immediate_math(inst_now,regis_now)
-        hexadecimal = format(int(binario, 2), "08X")
-
-        print(f"{format(aux, "08X")} : {hexadecimal} % {i[0]}: {' '.join(i[1:])} %")
+    print("Iniciando saída _text")
+    with open("saida.txt", "w") as f:
+        f.write(f"DEPTH = {RISCV_DEPTH}\n")
+        f.write(f"WIDTH = {RISCV_WIDTH}\n")
+        f.write("ADDRESS_RADIX = HEX;\nDATA_RADIX = HEX;\nCONTENT\nBEGIN\n")
+        global inst_global
+        aux = -1
+        for i in text:
+            aux+=1
+            if aux > RISCV_DEPTH:
+                print(f"Limite de Instruções Atingido. Parando na linha {i[0]}")
+                break
+            if i[1] not in inst_global:
+                try:
+                    i[2]
+                    print(f"Linha {i[0]} pulada. Motivo: Instrução não reconhecida.")
+                except:
+                    print(f"Linha {i[0]} pulada. Motivo: Instrução incompleta.")
+                continue
+            inst_now,regis_now,instruct_name = encoder_reg_opcode(i[1:])
+            if instruct_name in R_TYPE: binario = R_TYPE_FUNCT(inst_now,regis_now)
+            elif instruct_name in I_TYPE: binario = I_TYPE_FUNCT(inst_now,regis_now)
+            elif instruct_name in I_LOAD_TYPE: binario = I_LOAD_TYPE_FUNCT(inst_now,regis_now)
+            elif instruct_name in U_TYPE: binario = U_TYPE_FUNCT(inst_now,regis_now)
+            hexadecimal = format(int(binario, 2), "08X")
+            f.write(f"{format(aux, "08X")} : {hexadecimal};   % {i[0]}: {i[1]} {', '.join(i[2:])} %\n")
 TEXT_OUTPUT(text)
