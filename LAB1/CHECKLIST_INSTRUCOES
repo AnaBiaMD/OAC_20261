@@ -1,0 +1,14 @@
+• lw
+• add/sub/and/or/xor FEITO
+• addi
+• sw
+• jal
+• jalr
+• beq/bne
+• slt
+• slti
+• lui
+• auipc
+• sll/srl
+• addi/andi/ori/xori
+• lhu
