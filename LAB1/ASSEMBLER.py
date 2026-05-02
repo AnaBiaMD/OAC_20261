@@ -1,7 +1,6 @@
 RISCV_DEPTH = 16384
 RISCV_WIDTH = 32
 
-
 regis_global = {
 "zero":"x0", "ra":"x1", "sp":"x2", "gp":"x3", "tp":"x4",
  "t0":"x5","t1":"x6", "t2":"x7",
@@ -191,7 +190,6 @@ def S_TYPE_FUNCT(inst,reg):
         imm2 +
         inst["opcode"]
     )
-
 def J_TYPE_FUNCT(inst,reg):
     #Break into UJ format
     imm = int_to_bin(reg[1], 21)
@@ -301,9 +299,14 @@ def TEXT_OUTPUT(text,arquivo):
             pc += 4
         f.write("END;")
         print("Escrita do arquivo _text.mif finalizada.")
+def DATA_OUTPUT(data,arquivo):
+    #code data_parser
 
+
+arquivo= "entrada.asm"
 while True:
-    arquivo = input("Para sair, digite Sair. Nome do arquivo com extensão: ")
+    #arquivo = input("Para sair, digite Sair. Nome do arquivo com extensão: ")
+
     if arquivo == "Sair":
         exit()
     try:
@@ -313,7 +316,7 @@ while True:
     except:
         print("Não existe este arquivo. Você colocou a extensão?")
         continue
-
+    arquivo= "Sair"
     data = []
     text = []
     aux = ""
@@ -334,4 +337,5 @@ while True:
                 data.append(linha_atual)
         else:
             print(f"Linha {i} pulada. Motivo: Linha Vazia")
+    DATA_OUTPUT(data,arquivo)
     TEXT_OUTPUT(text,arquivo)
