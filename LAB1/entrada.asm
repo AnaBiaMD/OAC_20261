@@ -7,7 +7,7 @@ d: .string "a casa é azul."
 
 .text
 inicio: auipc, t0, 0
-jalr t6, 0(t0)
+jalr t6, 8(t0)
 lui t1, 0x1001
 addi t2, zero, 4
 sll t1, t1, t2
