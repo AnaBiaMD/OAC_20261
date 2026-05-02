@@ -20,7 +20,3 @@ jal rotulo
 beq t1, t2, rotulo
 lhu t5, 32(t1)
 rotulo: slti t1, t2, -1
-linha bugada para testar
-auipc t0, 1
-auipc t1, 0x12345
-auipc s0, -1

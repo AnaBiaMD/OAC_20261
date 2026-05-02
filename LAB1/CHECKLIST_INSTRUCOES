@@ -1,12 +1,12 @@
 • lw FEITO
 • add/sub/and/or/xor FEITO
 • addi FEITO
-• sw
-• jal
-• jalr
-• beq/bne
+• sw FEITO
+• jal FEITO
+• jalr FEITO?
+• beq/bne FEITO???
 • slt FEITO
-• slti
+• slti FEITO
 • lui FEITO
 • auipc FEITO
 • sll/srl FEITO
