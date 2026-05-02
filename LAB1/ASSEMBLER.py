@@ -94,7 +94,7 @@ inst_global = { #R INSTRUCTIONS
     }, #J TYPES
         "jal":{
         "opcode":"1101111",
-    },
+    }, #I_JUMP INSTRUCTION
         "jalr":{
         "opcode":"1100111",
         "funct3":"0x0"
@@ -112,9 +112,10 @@ inst_global = { #R INSTRUCTIONS
 R_TYPE = ["add","sub","and","or","xor","srl","sll"]
 I_TYPE = ["addi","xori","ori","andi","slti"]
 I_LOAD_TYPE =["lw","lhu"]
+I_JUMP_TYPE =["jalr"]
 S_TYPE= ["sw"]
 U_TYPE= ["lui","auipc"]
-J_TYPE = ["jal","jalr"]
+J_TYPE = ["jal"]
 B_TYPE= ["beq","bne"]
 
 def encoder_reg_opcode(reg):
@@ -205,6 +206,26 @@ def J_TYPE_FUNCT(inst,reg):
         reg_to_bin(reg[0]) +
         inst["opcode"]
     )
+def I_JUMP_TYPE_FUNCT(inst,reg):
+    if "(" in reg[1]:
+        rd = reg[0]
+        offset, rs1 = reg[1].split("(")
+        rs1 = rs1.replace(")", "")
+        rs1 = regis_global[rs1]
+        imm = int_to_bin(offset,12)
+        return (
+            imm +
+            reg_to_bin(rs1) +
+            hex_to_bin(inst["funct3"], 3) +
+            reg_to_bin(rd) +
+            inst["opcode"]
+        )
+    if len(reg) == 2:
+        regt = ['x1']
+        regt.append(reg[0])
+        regt.append(reg[1])
+        reg = regt
+    return int_to_bin(reg[2],12)+reg_to_bin(reg[1])+hex_to_bin(inst["funct3"],3)+reg_to_bin(reg[0])+ inst["opcode"]
 def B_TYPE_FUNCT(inst, reg, offset):
     imm = int_to_bin(offset, 13)  # 13 bits (porque inclui bit de sinal)
 
@@ -290,6 +311,7 @@ def TEXT_OUTPUT(text,arquivo):
                 offset = labels[label] - pc
 
                 binario = J_TYPE_FUNCT(inst_now, [rd, offset])
+            elif instruct_name in I_JUMP_TYPE: binario = I_JUMP_TYPE_FUNCT(inst_now,regis_now)
             hexadecimal = format(int(binario, 2), "08X")
             if str(i[0]) in aux_labels:
                 f.write(f"{format(aux, "08X")} : {hexadecimal};   % {i[0]}: {aux_labels[str(i[0])]} {i[1]} {', '.join(i[2:])} %\n")
