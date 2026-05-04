@@ -259,6 +259,40 @@ def build_labels(text):
             pc += 4
 
     return labels
+def TYPE_WORD(word):
+    ret = []
+    for i in word:
+        ret.append(f"{int(i):08x}")
+    return ret
+def TYPE_DWORD(dword):
+    ret = []
+    for i in dword:
+        ret.append(f"{int(i):016x}")
+    return ret
+def TYPE_HALF(half):
+    ret = []
+    for i in half:
+        ret.append(f"{int(i):04x}")
+    return ret
+def TYPE_BYTE(byte):
+    ret = []
+    for i in byte:
+        ret.append(f"{int(i):02x}")
+    return ret
+def TYPE_STRING(s):
+    c = ' '.join(s)
+    c = c.split('"')
+    while '' in c:
+        c.remove('')
+    while ' ' in c:
+        c.remove(' ')
+    c = ''.join(c)
+    hexa = []
+    for n in c:
+        hexa.insert(0, f'{ord(n):02x}')
+    string = ''.join(hexa)
+    size = len(string)
+    return [string, size]
 def TEXT_OUTPUT(text,arquivo):
     aux_labels = {}
     print("Iniciando saída _text")
@@ -323,6 +357,70 @@ def TEXT_OUTPUT(text,arquivo):
         print("Escrita do arquivo _text.mif finalizada.")
 def DATA_OUTPUT(data,arquivo):
     #code data_parser
+    print("Iniciando saída _data")
+    saida_nome = arquivo[:-4]+ "_data.mif"
+    pc = 0
+    DATA_DEPTH = 32768
+    with open(saida_nome, "w") as f:
+        f.write(f"DEPTH = {DATA_DEPTH}\n")
+        f.write(f"WIDTH = {RISCV_WIDTH}\n")
+        f.write("ADDRESS_RADIX = HEX;\nDATA_RADIX = HEX;\nCONTENT\nBEGIN\n")
+        count = 0
+        temp =[]
+        valor = ''
+        for i in data:
+            type = i[2]
+            if type == '.word':   
+                ret = TYPE_WORD(i[3:])
+                count += 8*len(ret)
+                for j in ret:
+                    temp.insert(0, j)
+            elif type == '.dword':   
+                ret = TYPE_DWORD(i[3:])
+                count += 16*len(ret)
+                for j in ret:
+                    temp.insert(0, j)
+            elif type == '.half':   
+                ret = TYPE_HALF(i[3:])
+                count += 4*len(ret)
+                for j in ret:
+                    temp.insert(0, j)
+            elif type == '.byte':   
+                ret = TYPE_BYTE(i[3:])
+                count += 2*len(ret)
+                for j in ret:
+                    temp.insert(0, j)
+            elif type == '.string': 
+                string =  TYPE_STRING(i[3:])
+                temp.insert(0, string[0])
+                count += string[1]
+            hexa = ''.join(temp)
+            while count >= 8:
+                count -= 8
+                index = f"{int(pc/4):08x}"
+                pc += 4
+                s = len(hexa)
+                valor = hexa[s-8:s+1]
+                hexa = hexa[0:s-8]
+                if valor != '':
+                    f.write(f"{index} : {int(valor, 16):08x};\n")
+                else:
+                    valor = 0
+                    f.write(f"{index} : {int( valor):08x};\n")
+            temp = [hexa]
+        index = f"{int(pc/4):08x}"
+        pc += 4
+        if hexa != '':
+            f.write(f"{index} : {int(hexa, 16):08x};\n")
+        else:
+            hexa = 0
+            f.write(f"{index} : {int(hexa):08x};\n")
+        hexa = 0
+        while pc <= 4092:
+            index = f"{int(pc/4):08x}"
+            pc += 4
+            f.write(f"{index} : {int(hexa):08x};\n")
+        f.write(f"END;\n")
 
 
 arquivo= "entrada.asm"
@@ -359,5 +457,8 @@ while True:
                 data.append(linha_atual)
         else:
             print(f"Linha {i} pulada. Motivo: Linha Vazia")
+
+
     DATA_OUTPUT(data,arquivo)
     TEXT_OUTPUT(text,arquivo)
+
