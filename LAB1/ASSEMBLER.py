@@ -73,6 +73,11 @@ inst_global = { #R INSTRUCTIONS
     "slti":{
         "opcode":"0010011",
         "funct3":"0x2"
+    },
+    "srli":{
+        "opcode":"0010011",
+        "funct3":"0x5"
+    
     }, # I_LOAD INSTRUCTIONS
         "lw":{
         "opcode":"0000011",
@@ -109,8 +114,8 @@ inst_global = { #R INSTRUCTIONS
     },
 }
 
-R_TYPE = ["add","sub","and","or","xor","srl","sll"]
-I_TYPE = ["addi","xori","ori","andi","slti"]
+R_TYPE = ["add","sub","and","or","xor","srl","sll","slt"]
+I_TYPE = ["addi","xori","ori","andi","slti", "srli"]
 I_LOAD_TYPE =["lw","lhu"]
 I_JUMP_TYPE =["jalr"]
 S_TYPE= ["sw"]
@@ -142,6 +147,7 @@ def hex_to_bin(valor,bits):
     return format(valor, f"0{bits}b")
 
 def int_to_bin(valor, bits):
+    
     valor = int(valor)
     if valor < 0: # máscara para casos negativos como -5
         valor = valor & ((1 << bits) - 1)
@@ -156,8 +162,10 @@ def I_LOAD_TYPE_FUNCT(inst,reg):
     rd = reg[0]
     offset, rs1 = reg[1].split("(")
     rs1 = rs1.replace(")", "")
-    rs1 = regis_global[rs1]
+    rs1 = regis_global[rs1] == 'srli'
     imm = int_to_bin(offset,12)
+    if inst == 'srli':
+        imm = '0000000' +imm[7:11]
     return (
         imm +
         reg_to_bin(rs1) +
@@ -257,7 +265,7 @@ def build_labels(text):
             labels[token[:-1]] = pc
         else:
             pc += 4
-
+    
     return labels
 def TYPE_WORD(word):
     ret = []
@@ -300,12 +308,13 @@ def TEXT_OUTPUT(text,arquivo):
     pc = 0
     labels = build_labels(text)
     with open(saida_nome, "w") as f:
-        f.write(f"DEPTH = {RISCV_DEPTH}\n")
-        f.write(f"WIDTH = {RISCV_WIDTH}\n")
+        f.write(f"DEPTH = {RISCV_DEPTH};\n")
+        f.write(f"WIDTH = {RISCV_WIDTH};\n")
         f.write("ADDRESS_RADIX = HEX;\nDATA_RADIX = HEX;\nCONTENT\nBEGIN\n")
         global inst_global
         aux = -1
         for i in text:
+            
             aux += 1
             if aux > RISCV_DEPTH:
                 print(f"Limite de Instruções Atingido. Parando na linha {i[0]}")
@@ -319,7 +328,7 @@ def TEXT_OUTPUT(text,arquivo):
                 continue
             if i[1][-1]==":":
                 aux_labels[str(i[0])] = i[1]
-                i.pop(1)
+                continue
             inst_now, regis_now, instruct_name = encoder_reg_opcode(i[1:])
             if instruct_name in R_TYPE: binario = R_TYPE_FUNCT(inst_now,regis_now)
             elif instruct_name in I_TYPE: binario = I_TYPE_FUNCT(inst_now,regis_now)
@@ -346,11 +355,11 @@ def TEXT_OUTPUT(text,arquivo):
 
                 binario = J_TYPE_FUNCT(inst_now, [rd, offset])
             elif instruct_name in I_JUMP_TYPE: binario = I_JUMP_TYPE_FUNCT(inst_now,regis_now)
-            hexadecimal = format(int(binario, 2), "08X")
+            hexadecimal = format(int(binario, 2), "08x")
             if str(i[0]) in aux_labels:
-                f.write(f"{format(aux, "08X")} : {hexadecimal};   % {i[0]}: {aux_labels[str(i[0])]} {i[1]} {', '.join(i[2:])} %\n")
+                f.write(f"{format(aux, "08x")} : {hexadecimal};   % {i[0]}: {aux_labels[str(i[0])]} {i[1]} {', '.join(i[2:])} %\n")
             else:
-                f.write(f"{format(aux, "08X")} : {hexadecimal};   % {i[0]}: {i[1]} {', '.join(i[2:])} %\n")
+                f.write(f"{format(aux, "08x")} : {hexadecimal};   % {i[0]}: {i[1]} {', '.join(i[2:])} %\n")
         
             pc += 4
         f.write("END;")
@@ -359,11 +368,12 @@ def DATA_OUTPUT(data,arquivo):
     #code data_parser
     print("Iniciando saída _data")
     saida_nome = arquivo[:-4]+ "_data.mif"
+    print(arquivo)
     pc = 0
     DATA_DEPTH = 32768
     with open(saida_nome, "w") as f:
-        f.write(f"DEPTH = {DATA_DEPTH}\n")
-        f.write(f"WIDTH = {RISCV_WIDTH}\n")
+        f.write(f"DEPTH = {DATA_DEPTH};\n")
+        f.write(f"WIDTH = {RISCV_WIDTH};\n")
         f.write("ADDRESS_RADIX = HEX;\nDATA_RADIX = HEX;\nCONTENT\nBEGIN\n")
         count = 0
         temp =[]
@@ -423,9 +433,9 @@ def DATA_OUTPUT(data,arquivo):
         f.write(f"END;\n")
 
 
-arquivo= "entrada.asm"
+arquivo= "dia1nivel2.asm"
 while True:
-    #arquivo = input("Para sair, digite Sair. Nome do arquivo com extensão: ")
+    arquivo = input("Para sair, digite Sair. Nome do arquivo com extensão: ")
 
     if arquivo == "Sair":
         exit()
@@ -436,7 +446,6 @@ while True:
     except:
         print("Não existe este arquivo. Você colocou a extensão?")
         continue
-    arquivo= "Sair"
     data = []
     text = []
     aux = ""
@@ -461,4 +470,4 @@ while True:
 
     DATA_OUTPUT(data,arquivo)
     TEXT_OUTPUT(text,arquivo)
-
+    
