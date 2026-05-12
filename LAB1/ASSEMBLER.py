@@ -138,6 +138,7 @@ def encoder_reg_opcode(reg):
 
 # CONVERSIONS HANDLERS
 def reg_to_bin(reg):
+    print(reg)
     num = int(reg.replace("x", ""))
     return format(num, "05b")
 
@@ -147,12 +148,13 @@ def hex_to_bin(valor,bits):
     return format(valor, f"0{bits}b")
 
 def int_to_bin(valor, bits):
-    if '%hi' in valor:
-        valor = data_labels[valor[4]][0:5]
-        return format(valor, f"0{bits}b")
-    if '%lo' in valor:
-        valor = data_labels[valor[4]][5:8]
-        return format(valor, f"0{bits}b")
+    if type(valor)!=int:
+        if '%hi' in valor:
+            valor = data_labels[valor[4]][0:5]
+            return format(valor, f"0{bits}b")
+        if '%lo' in valor:
+            valor = data_labels[valor[4]][5:8]
+            return format(valor, f"0{bits}b")
     valor = int(valor)
     valor = int(valor)
     if valor < 0: # máscara para casos negativos como -5
@@ -168,7 +170,7 @@ def I_LOAD_TYPE_FUNCT(inst,reg):
     rd = reg[0]
     offset, rs1 = reg[1].split("(")
     rs1 = rs1.replace(")", "")
-    rs1 = regis_global[rs1] == 'srli'
+    rs1 = regis_global[rs1]
     imm = int_to_bin(offset,12)
     if inst == 'srli':
         imm = '0000000' +imm[7:11]
@@ -276,7 +278,10 @@ def build_labels(text):
 def TYPE_WORD(word):
     ret = []
     for i in word:
-        ret.append(f"{int(i):08x}")
+        if i.isnumeric():
+            ret.append(f"{int(i):08x}")
+        else:
+            ret.append(i)
     return ret
 def TYPE_DWORD(dword):
     ret = []
@@ -475,17 +480,19 @@ while True:
     address = 0x10010000
     data_labels = {}
     for i in data:
-        data_labels[i[1]] = address
-        print(i)
         
-        if i[2] == '.byte':
-            address = address + hex((len(i)-3)*2)
-        elif i[2] == '.half':
-            address = address + hex((len(i)-3)*4)
-        elif i[2] == '.word':
-            address = address + hex((len(i)-3)*8)
-        elif i[2] == '.dword':
-            address = address + hex((len(i)-3)*16) 
+        print(i)
+        if len(i) != 2:
+            data_labels[i[1]] = address
+            if i[1] == '.byte':
+                address = address + hex((len(i)-2)*2)
+            elif i[1] == '.half':
+                address = address + hex((len(i)-2)*4)
+            elif i[1] == '.word':
+                address = address + hex((len(i)-2)*8)
+            elif i[1] == '.dword':
+                address = address + hex((len(i)-2)*16)
+            print(address)
     DATA_OUTPUT(data,arquivo)
     TEXT_OUTPUT(text,arquivo)
     
