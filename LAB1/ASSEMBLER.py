@@ -150,10 +150,10 @@ def int_to_bin(valor, bits):
     if type(valor)!=int:
         if '%hi' in valor:
             valor = data_labels[valor[4]][0:5]
-            return format(valor, f"0{bits}b")
+            return format(int(valor,16), f"0{bits}b")
         if '%lo' in valor:
             valor = data_labels[valor[4]][5:8]
-            return format(valor, f"0{bits}b")
+            return format(int(valor,16), f"0{bits}b")
     valor = int(valor)
     valor = int(valor)
     if valor < 0: # máscara para casos negativos como -5
@@ -493,22 +493,26 @@ while True:
             print(f"Linha {i} pulada. Motivo: Linha Vazia")
 
     address = 0x10010000
-    '''
+    
     data_labels = {}
+    offset = 0
     for i in data:
-        
-        print(i)
+        if len(i) == 2:
+            data_labels[i[1][:-1]] = hex(address)
+            offset = 1
+        elif '.' not in i[1]:
+            offset = 0
         if len(i) != 2:
-            data_labels[i[1]] = address
-            if i[1] == '.byte':
-                address = address + hex((len(i)-2)*2)
-            elif i[1] == '.half':
-                address = address + hex((len(i)-2)*4)
-            elif i[1] == '.word':
-                address = address + hex((len(i)-2)*8)
-            elif i[1] == '.dword':
-                address = address + hex((len(i)-2)*16)
-            print(address)'''
+            if offset != 1:
+                data_labels[i[1][:-1]] = hex(address)
+            if i[2-offset] == '.byte':
+                address = address + (len(i)-3+offset)*2
+            elif i[2-offset] == '.half':
+                address = address + (len(i)-3+offset)*4
+            elif i[2-offset] == '.word':
+                address = address + (len(i)-3+offset)*8
+            elif i[2-offset] == '.dword':
+                address = address + (len(i)-3+offset)*16
     DATA_OUTPUT(data,arquivo)
     TEXT_OUTPUT(text,arquivo)
     
