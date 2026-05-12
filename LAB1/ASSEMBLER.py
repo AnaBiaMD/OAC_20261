@@ -330,6 +330,7 @@ def TEXT_OUTPUT(text,arquivo):
                 print(f"Limite de Instruções Atingido. Parando na linha {i[0]}")
                 break
             if i[1] not in inst_global and i[1][-1]!=":":
+                aux += -1
                 try:
                     i[2]
                     print(f"Linha {i[0]} pulada. Motivo: Instrução não reconhecida.")
@@ -337,6 +338,7 @@ def TEXT_OUTPUT(text,arquivo):
                     print(f"Linha {i[0]} pulada. Motivo: Instrução incompleta.")
                 continue
             if i[1][-1]==":":
+                aux += -1
                 aux_labels[str(i[0])] = i[1]
                 continue
             inst_now, regis_now, instruct_name = encoder_reg_opcode(i[1:])
