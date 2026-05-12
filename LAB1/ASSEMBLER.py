@@ -148,11 +148,11 @@ def hex_to_bin(valor,bits):
 
 def int_to_bin(valor, bits):
     if '%hi' in valor:
-     valor = data_labels[valor[4]][0:5]
-    	return format(valor, f"0{bits}b")
+        valor = data_labels[valor[4]][0:5]
+        return format(valor, f"0{bits}b")
     if '%lo' in valor:
-    	valor = data_labels[valor[4]][5:8]
-    	return format(valor, f"0{bits}b")
+        valor = data_labels[valor[4]][5:8]
+        return format(valor, f"0{bits}b")
     valor = int(valor)
     valor = int(valor)
     if valor < 0: # máscara para casos negativos como -5
@@ -439,7 +439,6 @@ def DATA_OUTPUT(data,arquivo):
         f.write(f"END;\n")
 
 
-arquivo= "dia1nivel2.asm"
 while True:
     arquivo = input("Para sair, digite Sair. Nome do arquivo com extensão: ")
 
@@ -474,13 +473,19 @@ while True:
             print(f"Linha {i} pulada. Motivo: Linha Vazia")
 
     address = 0x10010000
-   	for i in data:
-   	 data_labels[i[1]] = address
-   		 if i[2] == .byte:	address = address + hex((len(i)-2)*2)
-    		if i[2] == .half:	address = address + hex((len(i)-2)*4)
-    		if i[2] == .word:	address = address + hex((len(i)-2)*8)
-    		if i[2] == .dword:	address = address + hex((len(i)-2)*16)
-   	global data_labels
+    data_labels = {}
+    for i in data:
+        data_labels[i[1]] = address
+        print(i)
+        
+        if i[2] == '.byte':
+            address = address + hex((len(i)-3)*2)
+        elif i[2] == '.half':
+            address = address + hex((len(i)-3)*4)
+        elif i[2] == '.word':
+            address = address + hex((len(i)-3)*8)
+        elif i[2] == '.dword':
+            address = address + hex((len(i)-3)*16) 
     DATA_OUTPUT(data,arquivo)
     TEXT_OUTPUT(text,arquivo)
     
