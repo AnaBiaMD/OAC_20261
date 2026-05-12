@@ -389,10 +389,11 @@ def DATA_OUTPUT(data,arquivo):
         temp =[]
         valor = ''
         label = ""
+        label_aux = False
         for i in data:
             temp = []
-            print(i)
-            if len(i) != 2:
+            
+            if i[1][0]==".":
                 i.insert(1,label)
             try:
                 print(i)
