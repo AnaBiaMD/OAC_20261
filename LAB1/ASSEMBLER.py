@@ -390,6 +390,7 @@ def DATA_OUTPUT(data,arquivo):
         temp =[]
         valor = ''
         for i in data:
+            temp = []
             type = i[2]
             if type == '.word':   
                 ret = TYPE_WORD(i[3:])
@@ -423,11 +424,12 @@ def DATA_OUTPUT(data,arquivo):
                 s = len(hexa)
                 valor = hexa[s-8:s+1]
                 hexa = hexa[0:s-8]
+                
                 if valor != '':
                     f.write(f"{index} : {int(valor, 16):08x};\n")
                 else:
                     valor = 0
-                    f.write(f"{index} : {int( valor):08x};\n")
+                    f.write(f"{index} : {int(valor):08x};\n")
             temp = [hexa]
         index = f"{int(pc/4):08x}"
         pc += 4
