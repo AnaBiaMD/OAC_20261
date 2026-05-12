@@ -138,7 +138,6 @@ def encoder_reg_opcode(reg):
 
 # CONVERSIONS HANDLERS
 def reg_to_bin(reg):
-    print(reg)
     num = int(reg.replace("x", ""))
     return format(num, "05b")
 
@@ -389,9 +388,20 @@ def DATA_OUTPUT(data,arquivo):
         count = 0
         temp =[]
         valor = ''
+        label = ""
         for i in data:
             temp = []
-            type = i[2]
+            print(i)
+            if len(i) != 2:
+                i.insert(1,label)
+            try:
+                print(i)
+                type = i[2]
+            except:
+                label = i[1]
+                continue
+
+            
             if type == '.word':   
                 ret = TYPE_WORD(i[3:])
                 count += 8*len(ret)
@@ -480,6 +490,7 @@ while True:
             print(f"Linha {i} pulada. Motivo: Linha Vazia")
 
     address = 0x10010000
+    '''
     data_labels = {}
     for i in data:
         
@@ -494,7 +505,7 @@ while True:
                 address = address + hex((len(i)-2)*8)
             elif i[1] == '.dword':
                 address = address + hex((len(i)-2)*16)
-            print(address)
+            print(address)'''
     DATA_OUTPUT(data,arquivo)
     TEXT_OUTPUT(text,arquivo)
     
