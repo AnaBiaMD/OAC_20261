@@ -1,0 +1,12 @@
+Depois de pegar os dados da linha, a função DATA\_OUTPUT verificase há bytes o suficiente
+para preencher uma linha da saída, e se houver, transfere os bytes da lista temp
+para a string hexa
+\begin{lstlisting}[language=Python]
+while count >= 8:
+                count -= 8
+                index = f"{int(pc/4):08x}"
+                pc += 4
+                s = len(hexa)
+                valor = hexa[s-8:s+1]
+                hexa = hexa[0:s-8]
+\end{lstlisting}
